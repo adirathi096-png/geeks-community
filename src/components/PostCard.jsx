@@ -139,12 +139,11 @@ export default function PostCard({ post, onDeletePost, isAdmin, currentUser }) {
       <h3 style={{ margin: '4px 0 8px' }}>{post.title}</h3>
       
       {post.imageUrl && (
-        <div style={{ overflow: 'hidden', borderRadius: '16px', marginBottom: '8px' }}>
-          <img 
-            src={post.imageUrl} 
-            alt={post.title} 
-            className="rounded-xl object-cover" 
-            style={{ width: '100%', maxHeight: '300px' }} 
+        <div className="post-image-wrapper">
+          <img
+            src={post.imageUrl}
+            alt={post.title}
+            className="post-image"
           />
         </div>
       )}
