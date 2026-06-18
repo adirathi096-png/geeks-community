@@ -83,7 +83,8 @@ function App() {
         user_id,
         group_id,
         profiles (
-          full_name
+          full_name,
+          email
         ),
         community_groups (
           name
@@ -101,6 +102,8 @@ function App() {
         tag: post.tag,
         imageUrl: post.image_url,
         user_id: post.user_id,
+        user_email: post.profiles?.email || null,
+        author_email: post.profiles?.email || null,
         group_id: post.group_id,
         studentName: post.profiles?.full_name || 'Unknown',
         groupName: post.community_groups?.name || 'General',
@@ -476,7 +479,7 @@ function App() {
       />
       <IdeaSection ideas={ideas} onAddIdea={addIdea} onDeleteIdea={deleteIdea} isAdmin={isAdmin} currentUser={currentUser} />
       <FeaturedStudents featuredStudents={featuredStudents} />
-      <StreakSection streak={streak} />
+      <StreakSection streak={streak} posts={posts} />
       {isAdmin && (
         <AdminPanel
           posts={posts}

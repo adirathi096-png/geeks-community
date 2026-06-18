@@ -31,7 +31,7 @@ function renderBadgeIcon(iconName, status) {
   );
 }
 
-export default function StreakSection({ streak }) {
+export default function StreakSection({ streak, posts = [] }) {
   const currentStreak = streak.current_streak !== undefined ? streak.current_streak : (streak.current || 0);
   const totalPosts = streak.total_posts !== undefined ? streak.total_posts : (streak.totalPosts || 0);
   
@@ -67,12 +67,22 @@ export default function StreakSection({ streak }) {
         if (error) {
           console.error('Error fetching leaderboard:', error);
         } else if (data) {
-          const sorted = [...data].sort((a, b) => {
+          const sorted = [...data].map(streakItem => {
+            const count = posts.filter(post =>
+              (post.user_id && post.user_id === streakItem.user_id) ||
+              (post.user_email && post.user_email === streakItem.user_email) ||
+              (post.author_email && post.author_email === streakItem.user_email)
+            ).length;
+            return {
+              ...streakItem,
+              visiblePostsCount: count
+            };
+          }).sort((a, b) => {
             if (b.current_streak !== a.current_streak) {
               return b.current_streak - a.current_streak;
             }
-            if (b.total_posts !== a.total_posts) {
-              return b.total_posts - a.total_posts;
+            if (b.visiblePostsCount !== a.visiblePostsCount) {
+              return b.visiblePostsCount - a.visiblePostsCount;
             }
             const dateA = a.last_post_at ? new Date(a.last_post_at).getTime() : 0;
             const dateB = b.last_post_at ? new Date(b.last_post_at).getTime() : 0;
@@ -88,7 +98,7 @@ export default function StreakSection({ streak }) {
     }
 
     fetchLeaderboard();
-  }, [streak]);
+  }, [streak, posts]);
 
   // Define Badge Milestones
   const badgesList = [
@@ -530,7 +540,7 @@ export default function StreakSection({ streak }) {
                             🔥 {item.current_streak} days
                           </span>
                         </td>
-                        <td style={{ padding: '16px' }}>{item.total_posts}</td>
+                        <td style={{ padding: '16px' }}>{item.visiblePostsCount}</td>
                         <td style={{ padding: '16px', color: 'var(--muted)', fontSize: '0.9rem' }}>{dateStr}</td>
                       </tr>
                     );
@@ -574,7 +584,7 @@ export default function StreakSection({ streak }) {
                         {item.full_name || item.user_email}
                       </h4>
                       <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', color: 'var(--muted)' }}>
-                        <span>Total Posts: <strong>{item.total_posts}</strong></span>
+                        <span>Total Posts: <strong>{item.visiblePostsCount}</strong></span>
                         <span>Active: <strong>{dateStr}</strong></span>
                       </div>
                     </div>
