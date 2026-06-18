@@ -136,38 +136,52 @@ export default function PostSection({
           <textarea name="content" placeholder="Post Content" rows="5" required disabled={submitting} />
           <input name="tag" placeholder="Category / Tag" required disabled={submitting} />
           
-          <div style={{ marginTop: '5px' }}>
-            <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold', fontSize: '0.85rem' }}>
-              Add Image (Optional)
-            </label>
+          <div style={{ marginTop: '12px' }}>
             <input 
+              id="post-image-upload"
               type="file" 
               accept="image/*" 
               ref={fileInputRef}
               onChange={handleImageChange}
               disabled={submitting}
-              style={{ padding: '8px 10px', fontSize: '0.9rem' }}
+              style={{ display: 'none' }}
             />
+            
+            {imagePreview ? (
+              <div style={{ marginTop: '10px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px', fontSize: '0.85rem', marginBottom: '8px' }}>
+                  <span style={{ opacity: 0.8, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '60%' }}>
+                    Selected: <strong>{selectedImage?.name}</strong>
+                  </span>
+                  <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                    <label htmlFor="post-image-upload" style={{ cursor: 'pointer', color: '#60a5fa', textDecoration: 'underline', fontSize: '0.8rem' }}>
+                      Change
+                    </label>
+                    <span style={{ opacity: 0.2 }}>|</span>
+                    <button 
+                      type="button" 
+                      onClick={handleRemoveImage}
+                      className="remove-image-btn"
+                      style={{ marginTop: 0, padding: '4px 10px', fontSize: '0.8rem' }}
+                    >
+                      Remove
+                    </button>
+                  </div>
+                </div>
+                <div className="upload-preview">
+                  <img src={imagePreview} alt="Upload preview" />
+                </div>
+              </div>
+            ) : (
+              <label htmlFor="post-image-upload" className="custom-upload-box">
+                <div className="upload-icon">📷</div>
+                <div style={{ textAlign: 'left' }}>
+                  <strong style={{ display: 'block', fontSize: '0.95rem' }}>Upload Image (Optional)</strong>
+                  <p style={{ margin: '2px 0 0 0', fontSize: '0.78rem', opacity: 0.7 }}>PNG, JPG, WEBP supported</p>
+                </div>
+              </label>
+            )}
           </div>
-
-          {imagePreview && (
-            <div style={{ position: 'relative', marginTop: '10px', textAlign: 'center' }}>
-              <img 
-                src={imagePreview} 
-                alt="Upload preview" 
-                style={{ width: '100%', maxHeight: '200px', objectFit: 'cover', borderRadius: '12px' }} 
-              />
-              <button 
-                type="button" 
-                onClick={handleRemoveImage}
-                disabled={submitting}
-                className="danger-btn small-btn"
-                style={{ position: 'absolute', top: '5px', right: '5px', padding: '4px 8px', marginTop: 0 }}
-              >
-                Remove Image
-              </button>
-            </div>
-          )}
 
           <button className="primary-btn" disabled={submitting}>
             {submitting ? 'Uploading & Posting...' : 'Submit Post'}
