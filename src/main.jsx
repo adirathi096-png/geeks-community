@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useEffect } from 'react';
+import React, { useMemo, useState, useEffect, useRef } from 'react';
 import { createRoot } from 'react-dom/client';
 import './styles.css';
 import AuthPage from './components/AuthPage';
@@ -25,9 +25,32 @@ function App() {
   const [loading, setLoading] = useState(true);
   const [preselectedGroupId, setPreselectedGroupId] = useState("");
 
+  const [toast, setToast] = useState({ message: '', type: 'info', visible: false });
+
+  const showToast = (message, type = 'info') => {
+    setToast({ message, type, visible: true });
+  };
+
+  useEffect(() => {
+    if (toast.visible) {
+      const timer = setTimeout(() => {
+        setToast((prev) => ({ ...prev, visible: false }));
+      }, 3500);
+      return () => clearTimeout(timer);
+    }
+  }, [toast.visible, toast.message, toast.type]);
+
+  useEffect(() => {
+    window.showToast = showToast;
+  }, []);
+
   const isAdmin = currentUser?.role === 'admin';
+  const fetchingUserId = useRef(null);
 
   async function fetchProfile(userId) {
+    if (fetchingUserId.current === userId) return;
+    fetchingUserId.current = userId;
+
     try {
       const { data: profile, error } = await supabase
         .from('profiles')
@@ -38,6 +61,7 @@ function App() {
       if (error) {
         console.error('Error fetching profile:', error);
         setCurrentUser(null);
+        showToast("Could not load profile. Please try again.", "error");
       } else {
         const formattedProfile = {
           ...profile,
@@ -53,7 +77,9 @@ function App() {
       }
     } catch (err) {
       console.error('Fetch profile error:', err);
+      showToast("Could not load profile. Please try again.", "error");
     } finally {
+      fetchingUserId.current = null;
       setLoading(false);
     }
   }
@@ -229,17 +255,28 @@ function App() {
   }
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) {
-        fetchProfile(session.user.id);
-      } else {
-        setLoading(false);
-      }
-    });
+    let active = true;
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    async function checkSession() {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session && active) {
+          await fetchProfile(session.user.id);
+        } else if (active) {
+          setLoading(false);
+        }
+      } catch (err) {
+        console.error('Session check error:', err);
+        if (active) setLoading(false);
+      }
+    }
+
+    checkSession();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      if (!active) return;
       if (session) {
-        fetchProfile(session.user.id);
+        await fetchProfile(session.user.id);
       } else {
         setCurrentUser(null);
         setLoading(false);
@@ -247,6 +284,7 @@ function App() {
     });
 
     return () => {
+      active = false;
       subscription.unsubscribe();
     };
   }, []);
@@ -254,6 +292,7 @@ function App() {
   async function handleLogout() {
     await supabase.auth.signOut();
     setCurrentUser(null);
+    showToast('Logged out successfully.', 'info');
   }
 
   async function addPost(postData) {
@@ -272,7 +311,7 @@ function App() {
 
     if (error) {
       console.error('Error adding post:', error);
-      alert('Failed to submit post: ' + error.message);
+      showToast('Failed to submit post: ' + error.message, 'error');
       throw error;
     } else {
       fetchPosts();
@@ -380,7 +419,7 @@ function App() {
 
     if (error) {
       console.error('Error deleting post:', error);
-      alert('Failed to delete post: ' + error.message);
+      showToast('Failed to delete post: ' + error.message, 'error');
     } else {
       fetchPosts();
     }
@@ -399,7 +438,7 @@ function App() {
 
     if (error) {
       console.error('Error adding idea:', error);
-      alert('Failed to submit idea: ' + error.message);
+      showToast('Failed to submit idea: ' + error.message, 'error');
     } else {
       fetchIdeas();
     }
@@ -413,7 +452,7 @@ function App() {
 
     if (error) {
       console.error('Error deleting idea:', error);
-      alert('Failed to remove idea: ' + error.message);
+      showToast('Failed to remove idea: ' + error.message, 'error');
     } else {
       fetchIdeas();
     }
@@ -442,11 +481,32 @@ function App() {
     return Object.values(zonesMap);
   }, [groups]);
 
+  const renderToast = () => {
+    if (!toast.visible) return null;
+    return (
+      <div className={`toast-notification ${toast.type}`}>
+        <div className="toast-content">
+          <span className="toast-icon">
+            {toast.type === 'success' && '✅'}
+            {toast.type === 'error' && '❌'}
+            {toast.type === 'warning' && '⚠️'}
+            {toast.type === 'info' && 'ℹ️'}
+          </span>
+          <span className="toast-message">{toast.message}</span>
+        </div>
+        <button onClick={() => setToast(prev => ({ ...prev, visible: false }))} className="toast-close-btn">
+          ✕
+        </button>
+      </div>
+    );
+  };
+
   if (loading) {
     return (
       <div className="loading-screen">
         <div className="spinner"></div>
         <p>Loading Geeks Community...</p>
+        {renderToast()}
       </div>
     );
   }
@@ -454,7 +514,8 @@ function App() {
   if (!currentUser) {
     return (
       <main className={`app ${theme}`}>
-        <AuthPage theme={theme} setTheme={setTheme} />
+        <AuthPage theme={theme} setTheme={setTheme} showToast={showToast} />
+        {renderToast()}
       </main>
     );
   }
@@ -491,6 +552,7 @@ function App() {
           onDeleteIdea={deleteIdea}
         />
       )}
+      {renderToast()}
     </main>
   );
 }

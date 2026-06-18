@@ -106,7 +106,7 @@ export default function PostCard({ post, onDeletePost, isAdmin, currentUser }) {
       setNewCommentText('');
     } catch (err) {
       console.error('Comment submission error:', err);
-      alert('Failed to submit comment: ' + err.message);
+      window.showToast('Failed to submit comment: ' + err.message, 'error');
     } finally {
       setSubmittingComment(false);
     }

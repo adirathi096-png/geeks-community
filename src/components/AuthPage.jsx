@@ -9,7 +9,7 @@ function isStrongPassword(password) {
   return hasMinimumLength && hasNumber && hasSpecial;
 }
 
-export default function AuthPage({ theme, setTheme }) {
+export default function AuthPage({ theme, setTheme, showToast }) {
   const [mode, setMode] = useState('choice');
   const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(false);
@@ -26,17 +26,19 @@ export default function AuthPage({ theme, setTheme }) {
     const password = form.get('password');
 
     if (!fullName || !rollNumber || !branch || !passingYear || !email || !password) {
-      setMessage('Please fill all signup fields.');
+      showToast('Please fill all signup fields.', 'warning');
       return;
     }
 
     if (!isStrongPassword(password)) {
-      setMessage('Password must have 8 characters, 1 number, and 1 special character.');
+      showToast('Password must have 8 characters, 1 number, and 1 special character.', 'warning');
       return;
     }
 
     setLoading(true);
     try {
+      showToast('Creating your profile...', 'info');
+
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email,
         password,
@@ -51,20 +53,24 @@ export default function AuthPage({ theme, setTheme }) {
       });
 
       if (authError) {
-        setMessage('Signup failed: ' + authError.message);
+        if (authError.message.toLowerCase().includes('already') || authError.status === 422) {
+          showToast('Account already exists. Please login instead.', 'warning');
+        } else {
+          showToast('Signup failed: ' + authError.message, 'error');
+        }
         setLoading(false);
         return;
       }
 
       if (!authData.user) {
-        setMessage('Signup completed. Please check your email for confirmation.');
+        showToast('Signup completed. Please check your email for confirmation.', 'info');
         setLoading(false);
         return;
       }
 
       // If email confirmation is enabled and session is null, ask to verify email
       if (!authData.session) {
-        setMessage('Signup successful! Please check your email to verify your account before logging in.');
+        showToast('Signup successful! Please check your email to verify your account.', 'info');
         setLoading(false);
         return;
       }
@@ -95,13 +101,13 @@ export default function AuthPage({ theme, setTheme }) {
 
       if (profileError) {
         console.error('Profile creation error:', profileError);
-        setMessage('Auth succeeded, but profile creation failed: ' + profileError.message);
+        showToast('Auth succeeded, but profile creation failed: ' + profileError.message, 'error');
       } else {
-        setMessage('Signup successful! Logging you in...');
+        showToast('Signup successful! Welcome to Geeks Community.', 'success');
       }
     } catch (err) {
       console.error(err);
-      setMessage('An unexpected error occurred during signup.');
+      showToast('An unexpected error occurred during signup.', 'error');
     } finally {
       setLoading(false);
     }
@@ -115,7 +121,7 @@ export default function AuthPage({ theme, setTheme }) {
     const password = form.get('password');
 
     if (!rollNumber || !password) {
-      setMessage('Please enter roll number and password.');
+      showToast('Please enter roll number and password.', 'warning');
       return;
     }
 
@@ -128,13 +134,13 @@ export default function AuthPage({ theme, setTheme }) {
         .maybeSingle();
 
       if (profileError) {
-        setMessage('Error checking roll number: ' + profileError.message);
+        showToast('Error checking roll number: ' + profileError.message, 'error');
         setLoading(false);
         return;
       }
 
       if (!profileData) {
-        setMessage('Roll number not found. Please sign up first.');
+        showToast('Roll number not found. Please sign up first.', 'warning');
         setLoading(false);
         return;
       }
@@ -147,11 +153,13 @@ export default function AuthPage({ theme, setTheme }) {
       });
 
       if (loginError) {
-        setMessage('Login failed: ' + loginError.message);
+        showToast('Login failed. Please check your email or password.', 'error');
+      } else {
+        showToast('Welcome back! Redirecting to dashboard...', 'success');
       }
     } catch (err) {
       console.error(err);
-      setMessage('An unexpected error occurred during login.');
+      showToast('An unexpected error occurred during login.', 'error');
     } finally {
       setLoading(false);
     }
@@ -164,7 +172,7 @@ export default function AuthPage({ theme, setTheme }) {
     const email = form.get('email').trim();
 
     if (!email) {
-      setMessage('Please enter your email.');
+      showToast('Please enter your email.', 'warning');
       return;
     }
 
@@ -175,13 +183,13 @@ export default function AuthPage({ theme, setTheme }) {
       });
 
       if (error) {
-        setMessage('Reset failed: ' + error.message);
+        showToast('Reset failed: ' + error.message, 'error');
       } else {
-        setMessage('Password reset link sent to your email.');
+        showToast('Password reset link sent to your email.', 'success');
       }
     } catch (err) {
       console.error(err);
-      setMessage('An unexpected error occurred.');
+      showToast('An unexpected error occurred.', 'error');
     } finally {
       setLoading(false);
     }

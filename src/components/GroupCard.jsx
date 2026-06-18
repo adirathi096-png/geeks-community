@@ -179,7 +179,7 @@ export default function GroupCard({ group, zone, onPreselectGroup }) {
     if (hasRealLink) {
       window.open(group.whatsapp_link, '_blank');
     } else {
-      alert('WhatsApp link not available yet');
+      window.showToast('WhatsApp link not available yet', 'warning');
     }
   }
 

@@ -49,7 +49,7 @@ export default function PostSection({
     event.preventDefault();
     
     if (!selectedGroupId) {
-      alert("Please select a group");
+      window.showToast("Please select a group", "warning");
       return;
     }
 
@@ -103,7 +103,7 @@ export default function PostSection({
       if (setPreselectedGroupId) setPreselectedGroupId("");
     } catch (err) {
       console.error('Post submission error:', err);
-      alert(err.message || 'An error occurred while uploading the post.');
+      window.showToast(err.message || 'An error occurred while uploading the post.', 'error');
     } finally {
       setSubmitting(false);
     }

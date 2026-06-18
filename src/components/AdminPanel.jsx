@@ -47,7 +47,7 @@ export default function AdminPanel({
 
   async function handleUpdateGroupLink(groupId) {
     if (!newGroupLink.trim()) {
-      alert('Please enter a valid WhatsApp link.');
+      window.showToast('Please enter a valid WhatsApp link.', 'warning');
       return;
     }
     try {
@@ -57,9 +57,9 @@ export default function AdminPanel({
         .eq('id', groupId);
 
       if (error) {
-        alert('Failed to update group link: ' + error.message);
+        window.showToast('Failed to update group link: ' + error.message, 'error');
       } else {
-        alert('WhatsApp link updated!');
+        window.showToast('WhatsApp link updated!', 'success');
         setEditingGroup(null);
         setNewGroupLink('');
         if (onRefreshGroups) onRefreshGroups();
@@ -82,9 +82,9 @@ export default function AdminPanel({
         .eq('id', studentId);
 
       if (error) {
-        alert('Failed to update student featured details: ' + error.message);
+        window.showToast('Failed to update student featured details: ' + error.message, 'error');
       } else {
-        alert('Student featured status updated successfully!');
+        window.showToast('Student featured status updated successfully!', 'success');
         setEditingStudentId(null);
         fetchStudents();
         if (onRefreshFeatured) onRefreshFeatured();
