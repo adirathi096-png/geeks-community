@@ -24,6 +24,7 @@ function App() {
   const [streak, setStreak] = useState({ current_streak: 0, total_posts: 0, last_post_at: null });
   const [loading, setLoading] = useState(true);
   const [preselectedGroupId, setPreselectedGroupId] = useState("");
+  const [isCallback, setIsCallback] = useState(window.location.pathname === '/auth/callback');
 
   const [toast, setToast] = useState({ message: '', type: 'info', visible: false });
 
@@ -52,29 +53,69 @@ function App() {
     fetchingUserId.current = userId;
 
     try {
-      const { data: profile, error } = await supabase
+      // Get current session to read user metadata
+      const { data: { session } } = await supabase.auth.getSession();
+      const authUser = session?.user;
+
+      if (!authUser) {
+        setCurrentUser(null);
+        setLoading(false);
+        fetchingUserId.current = null;
+        return;
+      }
+
+      // Check public.profiles where id = authUser.id or email = authUser.email
+      let { data: profile, error } = await supabase
         .from('profiles')
         .select('*')
-        .eq('id', userId)
-        .single();
+        .or(`id.eq.${userId},email.eq.${authUser.email}`)
+        .maybeSingle();
 
-      if (error) {
-        console.error('Error fetching profile:', error);
-        setCurrentUser(null);
-        showToast("Could not load profile. Please try again.", "error");
-      } else {
-        const formattedProfile = {
-          ...profile,
-          role: profile.is_admin ? 'admin' : 'student'
+      // If profile does not exist, auto-create it using auth user data
+      if (!profile) {
+        const fullName = authUser.user_metadata?.full_name || authUser.user_metadata?.name || 'Student';
+        const rollNumber = 'oauth_' + userId.substring(0, 8);
+        
+        const newProfile = {
+          id: userId,
+          email: authUser.email,
+          full_name: fullName,
+          roll_number: rollNumber,
+          branch: 'General',
+          passing_year: 2026,
+          is_admin: false,
+          is_featured: false
         };
-        setCurrentUser(formattedProfile);
-        // Fetch community data once user profile is verified
-        fetchGroups();
-        fetchPosts();
-        fetchIdeas();
-        fetchFeaturedStudents();
-        fetchStreak(userId, formattedProfile);
+
+        const { data: inserted, error: insertError } = await supabase
+          .from('profiles')
+          .insert(newProfile)
+          .select()
+          .single();
+
+        if (insertError) {
+          console.error('Profile auto-creation error:', insertError);
+          showToast('Profile creation failed. Please try again.', 'error');
+          setCurrentUser(null);
+          setLoading(false);
+          fetchingUserId.current = null;
+          return;
+        }
+
+        profile = inserted;
       }
+
+      const formattedProfile = {
+        ...profile,
+        role: profile.is_admin ? 'admin' : 'student'
+      };
+      setCurrentUser(formattedProfile);
+      // Fetch community data once user profile is verified
+      fetchGroups();
+      fetchPosts();
+      fetchIdeas();
+      fetchFeaturedStudents();
+      fetchStreak(userId, formattedProfile);
     } catch (err) {
       console.error('Fetch profile error:', err);
       showToast("Could not load profile. Please try again.", "error");
@@ -289,6 +330,30 @@ function App() {
     };
   }, []);
 
+  useEffect(() => {
+    if (window.location.pathname === '/auth/callback') {
+      async function handleCallback() {
+        try {
+          const { data: { session }, error } = await supabase.auth.getSession();
+          if (error) throw error;
+          if (session) {
+            await fetchProfile(session.user.id);
+            showToast('Logged in successfully!', 'success');
+          } else {
+            showToast('No active session found.', 'warning');
+          }
+        } catch (err) {
+          console.error('Callback error:', err);
+          showToast('OAuth callback failed: ' + err.message, 'error');
+        } finally {
+          setIsCallback(false);
+          window.history.replaceState({}, document.title, "/");
+        }
+      }
+      handleCallback();
+    }
+  }, []);
+
   async function handleLogout() {
     await supabase.auth.signOut();
     setCurrentUser(null);
@@ -501,11 +566,11 @@ function App() {
     );
   };
 
-  if (loading) {
+  if (isCallback || loading) {
     return (
       <div className="loading-screen">
         <div className="spinner"></div>
-        <p>Loading Geeks Community...</p>
+        <p>{isCallback ? 'Completing login...' : 'Loading Geeks Community...'}</p>
         {renderToast()}
       </div>
     );

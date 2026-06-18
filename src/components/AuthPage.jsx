@@ -195,6 +195,24 @@ export default function AuthPage({ theme, setTheme, showToast }) {
     }
   }
 
+  async function handleOAuthLogin(provider) {
+    try {
+      showToast(`Redirecting to ${provider}...`, 'info');
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider,
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback`
+        }
+      });
+      if (error) {
+        showToast(`${provider} login failed: ` + error.message, 'error');
+      }
+    } catch (err) {
+      console.error(err);
+      showToast(`An unexpected error occurred during ${provider} login.`, 'error');
+    }
+  }
+
   return (
     <section className="auth-page">
       <div className="auth-topbar">
@@ -208,9 +226,36 @@ export default function AuthPage({ theme, setTheme, showToast }) {
         <p>Login or sign up to explore groups, posts, ideas, featured students, and your streak.</p>
 
         {mode === 'choice' && (
-          <div className="auth-actions">
-            <button className="primary-btn" onClick={() => setMode('signup')}>Sign Up</button>
-            <button className="secondary-btn" onClick={() => setMode('login')}>Login</button>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginTop: '20px' }}>
+            <div className="auth-actions" style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
+              <button className="primary-btn" style={{ flex: 1 }} onClick={() => setMode('signup')}>Sign Up</button>
+              <button className="secondary-btn" style={{ flex: 1 }} onClick={() => setMode('login')}>Login</button>
+            </div>
+            
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', margin: '10px 0' }}>
+              <hr style={{ flex: 1, border: 'none', borderTop: '1px solid rgba(255, 255, 255, 0.1)' }} />
+              <span style={{ fontSize: '0.8rem', color: 'var(--muted)' }}>or continue with</span>
+              <hr style={{ flex: 1, border: 'none', borderTop: '1px solid rgba(255, 255, 255, 0.1)' }} />
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              <button 
+                type="button" 
+                className="secondary-btn" 
+                onClick={() => handleOAuthLogin('google')}
+                style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', width: '100%', padding: '12px' }}
+              >
+                <span>🌐</span> Continue with Google
+              </button>
+              <button 
+                type="button" 
+                className="secondary-btn" 
+                onClick={() => handleOAuthLogin('apple')}
+                style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', width: '100%', padding: '12px' }}
+              >
+                <span>🍎</span> Continue with Apple
+              </button>
+            </div>
           </div>
         )}
 
