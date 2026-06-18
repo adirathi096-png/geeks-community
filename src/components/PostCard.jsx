@@ -137,19 +137,20 @@ export default function PostCard({ post, onDeletePost, isAdmin, currentUser }) {
         <span>{post.time}</span>
       </div>
       <h3 style={{ margin: '4px 0 8px' }}>{post.title}</h3>
-      
+
       {post.imageUrl && (
-        <div className="post-image-wrapper">
+        <div className="natural-post-image-wrapper">
           <img
             src={post.imageUrl}
-            alt={post.title}
-            className="post-image"
+            alt={post.title || "Post image"}
+            className="natural-post-image"
+            loading="lazy"
           />
         </div>
       )}
 
       <p style={{ margin: '0 0 10px', whiteSpace: 'pre-wrap' }}>{post.content}</p>
-      
+
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
         <span className="tag-pill">#{post.tag}</span>
         {canDeletePost && (
@@ -163,7 +164,7 @@ export default function PostCard({ post, onDeletePost, isAdmin, currentUser }) {
 
       {/* ACTIONS */}
       <div style={{ display: 'flex', gap: '15px', alignItems: 'center' }}>
-        <button 
+        <button
           onClick={handleToggleLike}
           style={{
             background: 'none',
@@ -191,27 +192,27 @@ export default function PostCard({ post, onDeletePost, isAdmin, currentUser }) {
       {/* COMMENTS FEED */}
       <div className="comments-section" style={{ marginTop: '10px' }}>
         {comments.length > 0 && (
-          <div style={{ 
-            display: 'flex', 
-            flexDirection: 'column', 
-            gap: '8px', 
-            maxHeight: '220px', 
-            overflowY: 'auto', 
-            padding: '10px', 
-            borderRadius: '12px', 
+          <div style={{
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '8px',
+            maxHeight: '220px',
+            overflowY: 'auto',
+            padding: '10px',
+            borderRadius: '12px',
             backgroundColor: 'rgba(0, 0, 0, 0.15)',
-            marginBottom: '10px' 
+            marginBottom: '10px'
           }}>
             {comments.map((comment) => {
               const canDeleteComment = isAdmin || (currentUser && comment.user_id === currentUser.id);
               return (
-                <div key={comment.id} style={{ 
-                  display: 'flex', 
-                  justifyContent: 'space-between', 
-                  alignItems: 'start', 
-                  fontSize: '0.85rem', 
-                  paddingBottom: '6px', 
-                  borderBottom: '1px solid rgba(255,255,255,0.05)' 
+                <div key={comment.id} style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'start',
+                  fontSize: '0.85rem',
+                  paddingBottom: '6px',
+                  borderBottom: '1px solid rgba(255,255,255,0.05)'
                 }}>
                   <div style={{ flex: 1, paddingRight: '10px' }}>
                     <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '2px' }}>
@@ -223,7 +224,7 @@ export default function PostCard({ post, onDeletePost, isAdmin, currentUser }) {
                     <p style={{ margin: 0, opacity: 0.9 }}>{comment.content}</p>
                   </div>
                   {canDeleteComment && (
-                    <button 
+                    <button
                       onClick={() => handleDeleteComment(comment.id)}
                       style={{
                         background: 'none',
@@ -245,24 +246,24 @@ export default function PostCard({ post, onDeletePost, isAdmin, currentUser }) {
 
         {/* INPUT FORM */}
         <form onSubmit={handleAddComment} style={{ display: 'flex', gap: '8px' }}>
-          <input 
-            type="text" 
-            placeholder="Write a comment..." 
+          <input
+            type="text"
+            placeholder="Write a comment..."
             value={newCommentText}
             onChange={(e) => setNewCommentText(e.target.value)}
             disabled={submittingComment}
             required
-            style={{ 
-              flex: 1, 
-              padding: '10px 14px', 
-              fontSize: '0.88rem', 
-              borderRadius: '12px', 
-              margin: 0 
+            style={{
+              flex: 1,
+              padding: '10px 14px',
+              fontSize: '0.88rem',
+              borderRadius: '12px',
+              margin: 0
             }}
           />
-          <button 
-            type="submit" 
-            className="primary-btn small-btn" 
+          <button
+            type="submit"
+            className="primary-btn small-btn"
             disabled={submittingComment || !newCommentText.trim()}
             style={{ padding: '8px 14px', borderRadius: '12px', whiteSpace: 'nowrap' }}
           >
