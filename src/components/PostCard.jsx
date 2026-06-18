@@ -139,11 +139,11 @@ export default function PostCard({ post, onDeletePost, isAdmin, currentUser }) {
       <h3 style={{ margin: '4px 0 8px' }}>{post.title}</h3>
 
       {post.imageUrl && (
-        <div className="natural-post-image-wrapper">
+        <div className="post-image-frame">
           <img
             src={post.imageUrl}
             alt={post.title || "Post image"}
-            className="natural-post-image"
+            className="post-image-original"
             loading="lazy"
           />
         </div>
